@@ -1,32 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float _moveSpeed = 10f;
     [SerializeField] private int _damageAmount = 1;
 
-    private Vector2 _fireDirection;
+    public Vector2 FireDirection { get; set; }
+    private Camera _mainCamera;
 
     private Rigidbody2D _rigidBody;
 
     private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
-    }
-
-    private void Start() {
-        if (PlayerController.Instance.IsFacingRight()) {
-            _fireDirection = Vector2.right;
-        } else {
-            _fireDirection = Vector2.left;
-        }
+        _mainCamera = Camera.main;
     }
 
     private void FixedUpdate()
     {
-        _rigidBody.velocity = _fireDirection * _moveSpeed;
+        _rigidBody.velocity = FireDirection * _moveSpeed;
     }
 
     private void OnTriggerEnter2D(Collider2D other) {
