@@ -1,4 +1,5 @@
 using System;
+using Cinemachine;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,16 +18,19 @@ public class Gun : MonoBehaviour
     private Camera _mainCamera;
     private Vector2 _direction;
     private Tween _recoilTween;
+    private CinemachineImpulseSource _impulseSource;
     private float _fireTimer;
 
     private void Awake()
     {
         _mainCamera = Camera.main;
+        _impulseSource = GetComponent<CinemachineImpulseSource>();
         BulletPool = new ObjectPool<Bullet>(
             () => Instantiate(_bulletPrefab), 
             bullet => bullet.gameObject.SetActive(true), 
             bullet => bullet.gameObject.SetActive(false),
-            bullet => Destroy(bullet.gameObject));
+            bullet => Destroy(bullet.gameObject),
+            false, 20, 50);
     }
 
     private void OnEnable()
@@ -66,6 +70,7 @@ public class Gun : MonoBehaviour
 
     private void ShootAnimation()
     {
+        _impulseSource.GenerateImpulse();
         _recoilTween?.Kill();
         _recoilTween = transform.DOShakePosition(0.1f, 0.2f, 10, 90, false);
     }
