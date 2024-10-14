@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Bullet : MonoBehaviour
 {
@@ -9,14 +7,18 @@ public class Bullet : MonoBehaviour
     [SerializeField] private int _damageAmount = 1;
 
     public Vector2 FireDirection { get; set; }
-    private Camera _mainCamera;
+    private bool _isReleased;
 
     private Rigidbody2D _rigidBody;
+
+    private void OnEnable()
+    {
+        _isReleased = false;
+    }
 
     private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
-        _mainCamera = Camera.main;
     }
 
     private void FixedUpdate()
@@ -27,6 +29,11 @@ public class Bullet : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other) {
         Health health = other.gameObject.GetComponent<Health>();
         health?.TakeDamage(_damageAmount);
-        Destroy(this.gameObject);
+        
+        if (!_isReleased)
+        {
+            _isReleased = true;
+            Gun.BulletPool.Release(this);
+        }
     }
 }

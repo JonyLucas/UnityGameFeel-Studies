@@ -1,11 +1,13 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 
 public class Gun : MonoBehaviour
 {
     public static Action OnShoot;
-    public Transform BulletSpawnPoint => _bulletSpawnPoint;
+    public static ObjectPool<Bullet> BulletPool { get; private set; }
 
     [SerializeField] private Transform _bulletSpawnPoint;
     [SerializeField] private Bullet _bulletPrefab;
@@ -14,21 +16,29 @@ public class Gun : MonoBehaviour
     
     private Camera _mainCamera;
     private Vector2 _direction;
+    private Tween _recoilTween;
     private float _fireTimer;
 
     private void Awake()
     {
         _mainCamera = Camera.main;
+        BulletPool = new ObjectPool<Bullet>(
+            () => Instantiate(_bulletPrefab), 
+            bullet => bullet.gameObject.SetActive(true), 
+            bullet => bullet.gameObject.SetActive(false),
+            bullet => Destroy(bullet.gameObject));
     }
 
     private void OnEnable()
     {
         OnShoot += ShootProjectile;
+        OnShoot += ShootAnimation;
     }
     
     private void OnDisable()
     {
         OnShoot -= ShootProjectile;
+        OnShoot -= ShootAnimation;
     }
 
     private void Update()
@@ -48,9 +58,16 @@ public class Gun : MonoBehaviour
 
     private void ShootProjectile()
     {
-        var newBullet = Instantiate(_bulletPrefab, _bulletSpawnPoint.position, Quaternion.identity);
+        var newBullet = BulletPool.Get();
+        newBullet.transform.position = _bulletSpawnPoint.position;
         newBullet.FireDirection = _direction.normalized;
         _fireTimer = 0;
+    }
+
+    private void ShootAnimation()
+    {
+        _recoilTween?.Kill();
+        _recoilTween = transform.DOShakePosition(0.1f, 0.2f, 10, 90, false);
     }
 
     private void Rotate()
